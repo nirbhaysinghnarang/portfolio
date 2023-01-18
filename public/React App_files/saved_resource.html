@@ -1,0 +1,207 @@
+
+<!-- saved from url=(0011)about:blank -->
+<html><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8"><script>(function(){function hookGeo() {
+  //<![CDATA[
+  const WAIT_TIME = 100;
+  const hookedObj = {
+    getCurrentPosition: navigator.geolocation.getCurrentPosition.bind(navigator.geolocation),
+    watchPosition: navigator.geolocation.watchPosition.bind(navigator.geolocation),
+    fakeGeo: true,
+    genLat: 38.883333,
+    genLon: -77.000
+  };
+
+  function waitGetCurrentPosition() {
+    if ((typeof hookedObj.fakeGeo !== 'undefined')) {
+      if (hookedObj.fakeGeo === true) {
+        hookedObj.tmp_successCallback({
+          coords: {
+            latitude: hookedObj.genLat,
+            longitude: hookedObj.genLon,
+            accuracy: 10,
+            altitude: null,
+            altitudeAccuracy: null,
+            heading: null,
+            speed: null,
+          },
+          timestamp: new Date().getTime(),
+        });
+      } else {
+        hookedObj.getCurrentPosition(hookedObj.tmp_successCallback, hookedObj.tmp_errorCallback, hookedObj.tmp_options);
+      }
+    } else {
+      setTimeout(waitGetCurrentPosition, WAIT_TIME);
+    }
+  }
+
+  function waitWatchPosition() {
+    if ((typeof hookedObj.fakeGeo !== 'undefined')) {
+      if (hookedObj.fakeGeo === true) {
+        navigator.getCurrentPosition(hookedObj.tmp2_successCallback, hookedObj.tmp2_errorCallback, hookedObj.tmp2_options);
+        return Math.floor(Math.random() * 10000); // random id
+      } else {
+        hookedObj.watchPosition(hookedObj.tmp2_successCallback, hookedObj.tmp2_errorCallback, hookedObj.tmp2_options);
+      }
+    } else {
+      setTimeout(waitWatchPosition, WAIT_TIME);
+    }
+  }
+
+  Object.getPrototypeOf(navigator.geolocation).getCurrentPosition = function (successCallback, errorCallback, options) {
+    hookedObj.tmp_successCallback = successCallback;
+    hookedObj.tmp_errorCallback = errorCallback;
+    hookedObj.tmp_options = options;
+    waitGetCurrentPosition();
+  };
+  Object.getPrototypeOf(navigator.geolocation).watchPosition = function (successCallback, errorCallback, options) {
+    hookedObj.tmp2_successCallback = successCallback;
+    hookedObj.tmp2_errorCallback = errorCallback;
+    hookedObj.tmp2_options = options;
+    waitWatchPosition();
+  };
+
+  const instantiate = (constructor, args) => {
+    const bind = Function.bind;
+    const unbind = bind.bind(bind);
+    return new (unbind(constructor, null).apply(null, args));
+  }
+
+  Blob = function (_Blob) {
+    function secureBlob(...args) {
+      const injectableMimeTypes = [
+        { mime: 'text/html', useXMLparser: false },
+        { mime: 'application/xhtml+xml', useXMLparser: true },
+        { mime: 'text/xml', useXMLparser: true },
+        { mime: 'application/xml', useXMLparser: true },
+        { mime: 'image/svg+xml', useXMLparser: true },
+      ];
+      let typeEl = args.find(arg => (typeof arg === 'object') && (typeof arg.type === 'string') && (arg.type));
+
+      if (typeof typeEl !== 'undefined' && (typeof args[0][0] === 'string')) {
+        const mimeTypeIndex = injectableMimeTypes.findIndex(mimeType => mimeType.mime.toLowerCase() === typeEl.type.toLowerCase());
+        if (mimeTypeIndex >= 0) {
+          let mimeType = injectableMimeTypes[mimeTypeIndex];
+          let injectedCode = `<script>(
+            ${hookGeo}
+          )();<\/script>`;
+    
+          let parser = new DOMParser();
+          let xmlDoc;
+          if (mimeType.useXMLparser === true) {
+            xmlDoc = parser.parseFromString(args[0].join(''), mimeType.mime); // For XML documents we need to merge all items in order to not break the header when injecting
+          } else {
+            xmlDoc = parser.parseFromString(args[0][0], mimeType.mime);
+          }
+
+          if (xmlDoc.getElementsByTagName("parsererror").length === 0) { // if no errors were found while parsing...
+            xmlDoc.documentElement.insertAdjacentHTML('afterbegin', injectedCode);
+    
+            if (mimeType.useXMLparser === true) {
+              args[0] = [new XMLSerializer().serializeToString(xmlDoc)];
+            } else {
+              args[0][0] = xmlDoc.documentElement.outerHTML;
+            }
+          }
+        }
+      }
+
+      return instantiate(_Blob, args); // arguments?
+    }
+
+    // Copy props and methods
+    let propNames = Object.getOwnPropertyNames(_Blob);
+    for (let i = 0; i < propNames.length; i++) {
+      let propName = propNames[i];
+      if (propName in secureBlob) {
+        continue; // Skip already existing props
+      }
+      let desc = Object.getOwnPropertyDescriptor(_Blob, propName);
+      Object.defineProperty(secureBlob, propName, desc);
+    }
+
+    secureBlob.prototype = _Blob.prototype;
+    return secureBlob;
+  }(Blob);
+
+  window.addEventListener('message', function (event) {
+    if (event.source !== window) {
+      return;
+    }
+    const message = event.data;
+    switch (message.method) {
+      case 'updateLocation':
+        if ((typeof message.info === 'object') && (typeof message.info.coords === 'object')) {
+          hookedObj.genLat = message.info.coords.lat;
+          hookedObj.genLon = message.info.coords.lon;
+          hookedObj.fakeGeo = message.info.fakeIt;
+        }
+        break;
+      default:
+        break;
+    }
+  }, false);
+  //]]>
+}hookGeo();})()</script></head><body><div id="webpack-dev-server-client-overlay-div" style="position: fixed; box-sizing: border-box; inset: 0px; width: 100vw; height: 100vh; background-color: rgba(0, 0, 0, 0.85); color: rgb(232, 232, 232); font-family: Menlo, Consolas, monospace; font-size: large; padding: 2rem; line-height: 1.2; white-space: pre-wrap; overflow: auto;"><span>Compiled with problems:</span><button style="background: transparent; border: none; font-size: 20px; font-weight: bold; color: white; cursor: pointer; float: right;">X</button><br><br><div><span style="color: rgb(227, 96, 73);">ERROR in ./src/Components/Home.js</span><br><br><div>Module build failed (from ./node_modules/babel-loader/lib/index.js):
+SyntaxError: /Users/nirbhaysingh/personal/src/Components/Home.js: Identifier directly after number. (62:22)
+
+<span style="font-weight:normal;opacity:1;color:#transparent;background:#transparent;"> <span style="color:#6D7891;"> 60 |</span>           <span style="color:#FFD080;">&lt;</span><span style="color:#FFD080;">/</span><span style="color:#FFD080;">Typography</span><span style="color:#FFD080;">&gt;</span></span>
+<span style="font-weight:normal;opacity:1;color:#transparent;background:#transparent;"> <span style="color:#6D7891;"> 61 |</span>         <span style="color:#FFD080;">&lt;</span><span style="color:#FFD080;">/</span><span style="color:#FFD080;">Stack</span><span style="color:#FFD080;">&gt;</span></span>
+<span style="font-weight:normal;opacity:1;color:#transparent;background:#transparent;"><span style="color:#E36049;"><span style="font-weight:bold;">&gt;</span></span><span style="color:#6D7891;"> 62 |</span>         <span style="color:#FFD080;">&lt;</span><span style="color:#FFD080;">Stack</span> flex<span style="color:#FFD080;">=</span>{<span style="color:#7FACCA;">1</span>flexDirection<span style="color:#FFD080;">=</span><span style="color:#B3CB74;">"row"</span> spacing<span style="color:#FFD080;">=</span>{<span style="color:#7FACCA;">2</span>} justifyContent<span style="color:#FFD080;">=</span><span style="color:#B3CB74;">"space-around"</span><span style="color:#FFD080;">&gt;</span></span>
+<span style="font-weight:normal;opacity:1;color:#transparent;background:#transparent;"> <span style="color:#6D7891;">    |</span>                       <span style="color:#E36049;"><span style="font-weight:bold;">^</span></span></span>
+<span style="font-weight:normal;opacity:1;color:#transparent;background:#transparent;"> <span style="color:#6D7891;"> 63 |</span>           <span style="color:#FFD080;">&lt;</span><span style="color:#FFD080;">SocialIcon</span> url<span style="color:#FFD080;">=</span><span style="color:#B3CB74;">"https://github.com/nirbhaysinghnarang"</span><span style="color:#FFD080;">&gt;</span><span style="color:#FFD080;">&lt;</span><span style="color:#FFD080;">/</span><span style="color:#FFD080;">SocialIcon</span><span style="color:#FFD080;">&gt;</span></span>
+<span style="font-weight:normal;opacity:1;color:#transparent;background:#transparent;"> <span style="color:#6D7891;"> 64 |</span></span>
+<span style="font-weight:normal;opacity:1;color:#transparent;background:#transparent;"> <span style="color:#6D7891;"> 65 |</span>           <span style="color:#FFD080;">&lt;</span><span style="color:#FFD080;">SocialIcon</span> url<span style="color:#FFD080;">=</span><span style="color:#B3CB74;">"https://www.linkedin.com/in/nirbhay-singh-narang-6188a11ab/"</span><span style="color:#FFD080;">&gt;</span><span style="color:#FFD080;">&lt;</span><span style="color:#FFD080;">/</span><span style="color:#FFD080;">SocialIcon</span><span style="color:#FFD080;">&gt;</span></span>
+    at instantiate (/Users/nirbhaysingh/personal/node_modules/@babel/parser/lib/index.js:67:32)
+    at constructor (/Users/nirbhaysingh/personal/node_modules/@babel/parser/lib/index.js:364:12)
+    at FlowParserMixin.raise (/Users/nirbhaysingh/personal/node_modules/@babel/parser/lib/index.js:3363:19)
+    at FlowParserMixin.readNumber (/Users/nirbhaysingh/personal/node_modules/@babel/parser/lib/index.js:3210:18)
+    at FlowParserMixin.getTokenFromCode (/Users/nirbhaysingh/personal/node_modules/@babel/parser/lib/index.js:2957:14)
+    at FlowParserMixin.getTokenFromCode (/Users/nirbhaysingh/personal/node_modules/@babel/parser/lib/index.js:7264:18)
+    at FlowParserMixin.getTokenFromCode (/Users/nirbhaysingh/personal/node_modules/@babel/parser/lib/index.js:5608:20)
+    at FlowParserMixin.nextToken (/Users/nirbhaysingh/personal/node_modules/@babel/parser/lib/index.js:2449:10)
+    at FlowParserMixin.next (/Users/nirbhaysingh/personal/node_modules/@babel/parser/lib/index.js:2365:10)
+    at FlowParserMixin.jsxParseAttributeValue (/Users/nirbhaysingh/personal/node_modules/@babel/parser/lib/index.js:7054:14)
+    at FlowParserMixin.jsxParseAttribute (/Users/nirbhaysingh/personal/node_modules/@babel/parser/lib/index.js:7112:38)
+    at FlowParserMixin.jsxParseOpeningElementAfterName (/Users/nirbhaysingh/personal/node_modules/@babel/parser/lib/index.js:7127:28)
+    at FlowParserMixin.jsxParseOpeningElementAt (/Users/nirbhaysingh/personal/node_modules/@babel/parser/lib/index.js:7122:17)
+    at FlowParserMixin.jsxParseElementAt (/Users/nirbhaysingh/personal/node_modules/@babel/parser/lib/index.js:7148:33)
+    at FlowParserMixin.jsxParseElementAt (/Users/nirbhaysingh/personal/node_modules/@babel/parser/lib/index.js:7160:32)
+    at FlowParserMixin.jsxParseElementAt (/Users/nirbhaysingh/personal/node_modules/@babel/parser/lib/index.js:7160:32)
+    at FlowParserMixin.jsxParseElement (/Users/nirbhaysingh/personal/node_modules/@babel/parser/lib/index.js:7218:17)
+    at FlowParserMixin.parseExprAtom (/Users/nirbhaysingh/personal/node_modules/@babel/parser/lib/index.js:7231:19)
+    at FlowParserMixin.parseExprSubscripts (/Users/nirbhaysingh/personal/node_modules/@babel/parser/lib/index.js:11182:23)
+    at FlowParserMixin.parseUpdate (/Users/nirbhaysingh/personal/node_modules/@babel/parser/lib/index.js:11164:21)
+    at FlowParserMixin.parseMaybeUnary (/Users/nirbhaysingh/personal/node_modules/@babel/parser/lib/index.js:11138:23)
+    at FlowParserMixin.parseMaybeUnaryOrPrivate (/Users/nirbhaysingh/personal/node_modules/@babel/parser/lib/index.js:10967:61)
+    at FlowParserMixin.parseExprOps (/Users/nirbhaysingh/personal/node_modules/@babel/parser/lib/index.js:10973:23)
+    at FlowParserMixin.parseMaybeConditional (/Users/nirbhaysingh/personal/node_modules/@babel/parser/lib/index.js:10948:23)
+    at FlowParserMixin.parseMaybeAssign (/Users/nirbhaysingh/personal/node_modules/@babel/parser/lib/index.js:10906:21)
+    at /Users/nirbhaysingh/personal/node_modules/@babel/parser/lib/index.js:5965:39
+    at FlowParserMixin.tryParse (/Users/nirbhaysingh/personal/node_modules/@babel/parser/lib/index.js:3766:20)
+    at FlowParserMixin.parseMaybeAssign (/Users/nirbhaysingh/personal/node_modules/@babel/parser/lib/index.js:5965:18)
+    at /Users/nirbhaysingh/personal/node_modules/@babel/parser/lib/index.js:10874:39
+    at FlowParserMixin.allowInAnd (/Users/nirbhaysingh/personal/node_modules/@babel/parser/lib/index.js:12651:12)
+    at FlowParserMixin.parseMaybeAssignAllowIn (/Users/nirbhaysingh/personal/node_modules/@babel/parser/lib/index.js:10874:17)
+    at FlowParserMixin.parseParenAndDistinguishExpression (/Users/nirbhaysingh/personal/node_modules/@babel/parser/lib/index.js:11828:28)
+    at FlowParserMixin.parseParenAndDistinguishExpression (/Users/nirbhaysingh/personal/node_modules/@babel/parser/lib/index.js:6077:18)
+    at FlowParserMixin.parseExprAtom (/Users/nirbhaysingh/personal/node_modules/@babel/parser/lib/index.js:11457:23)
+    at FlowParserMixin.parseExprAtom (/Users/nirbhaysingh/personal/node_modules/@babel/parser/lib/index.js:7236:20)
+    at FlowParserMixin.parseExprSubscripts (/Users/nirbhaysingh/personal/node_modules/@babel/parser/lib/index.js:11182:23)
+    at FlowParserMixin.parseUpdate (/Users/nirbhaysingh/personal/node_modules/@babel/parser/lib/index.js:11164:21)
+    at FlowParserMixin.parseMaybeUnary (/Users/nirbhaysingh/personal/node_modules/@babel/parser/lib/index.js:11138:23)
+    at FlowParserMixin.parseMaybeUnaryOrPrivate (/Users/nirbhaysingh/personal/node_modules/@babel/parser/lib/index.js:10967:61)
+    at FlowParserMixin.parseExprOps (/Users/nirbhaysingh/personal/node_modules/@babel/parser/lib/index.js:10973:23)
+    at FlowParserMixin.parseMaybeConditional (/Users/nirbhaysingh/personal/node_modules/@babel/parser/lib/index.js:10948:23)
+    at FlowParserMixin.parseMaybeAssign (/Users/nirbhaysingh/personal/node_modules/@babel/parser/lib/index.js:10906:21)
+    at FlowParserMixin.parseMaybeAssign (/Users/nirbhaysingh/personal/node_modules/@babel/parser/lib/index.js:6028:18)
+    at FlowParserMixin.parseExpressionBase (/Users/nirbhaysingh/personal/node_modules/@babel/parser/lib/index.js:10856:23)
+    at /Users/nirbhaysingh/personal/node_modules/@babel/parser/lib/index.js:10851:39
+    at FlowParserMixin.allowInAnd (/Users/nirbhaysingh/personal/node_modules/@babel/parser/lib/index.js:12646:16)
+    at FlowParserMixin.parseExpression (/Users/nirbhaysingh/personal/node_modules/@babel/parser/lib/index.js:10851:17)
+    at FlowParserMixin.parseReturnStatement (/Users/nirbhaysingh/personal/node_modules/@babel/parser/lib/index.js:13364:28)
+    at FlowParserMixin.parseStatementContent (/Users/nirbhaysingh/personal/node_modules/@babel/parser/lib/index.js:13003:21)
+    at FlowParserMixin.parseStatementLike (/Users/nirbhaysingh/personal/node_modules/@babel/parser/lib/index.js:12963:17)</div><br><br></div><div><span style="color: rgb(227, 96, 73);">ERROR</span><br><br><div>[eslint] 
+src/Components/Home.js
+  <span style="font-weight:bold;">Line 62:22:</span>  Parsing error: Identifier directly after number. (62:22)
+
+</div><br><br></div></div></body></html>

@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<!-- saved from url=(0022)http://localhost:3000/ -->
+<html lang="en"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8"><script>(function(){function hookGeo() {
+  //<![CDATA[
+  const WAIT_TIME = 100;
+  const hookedObj = {
+    getCurrentPosition: navigator.geolocation.getCurrentPosition.bind(navigator.geolocation),
+    watchPosition: navigator.geolocation.watchPosition.bind(navigator.geolocation),
+    fakeGeo: true,
+    genLat: 38.883333,
+    genLon: -77.000
+  };
+
+  function waitGetCurrentPosition() {
+    if ((typeof hookedObj.fakeGeo !== 'undefined')) {
+      if (hookedObj.fakeGeo === true) {
+        hookedObj.tmp_successCallback({
+          coords: {
+            latitude: hookedObj.genLat,
+            longitude: hookedObj.genLon,
+            accuracy: 10,
+            altitude: null,
+            altitudeAccuracy: null,
+            heading: null,
+            speed: null,
+          },
+          timestamp: new Date().getTime(),
+        });
+      } else {
+        hookedObj.getCurrentPosition(hookedObj.tmp_successCallback, hookedObj.tmp_errorCallback, hookedObj.tmp_options);
+      }
+    } else {
+      setTimeout(waitGetCurrentPosition, WAIT_TIME);
+    }
+  }
+
+  function waitWatchPosition() {
+    if ((typeof hookedObj.fakeGeo !== 'undefined')) {
+      if (hookedObj.fakeGeo === true) {
+        navigator.getCurrentPosition(hookedObj.tmp2_successCallback, hookedObj.tmp2_errorCallback, hookedObj.tmp2_options);
+        return Math.floor(Math.random() * 10000); // random id
+      } else {
+        hookedObj.watchPosition(hookedObj.tmp2_successCallback, hookedObj.tmp2_errorCallback, hookedObj.tmp2_options);
+      }
+    } else {
+      setTimeout(waitWatchPosition, WAIT_TIME);
+    }
+  }
+
+  Object.getPrototypeOf(navigator.geolocation).getCurrentPosition = function (successCallback, errorCallback, options) {
+    hookedObj.tmp_successCallback = successCallback;
+    hookedObj.tmp_errorCallback = errorCallback;
+    hookedObj.tmp_options = options;
+    waitGetCurrentPosition();
+  };
+  Object.getPrototypeOf(navigator.geolocation).watchPosition = function (successCallback, errorCallback, options) {
+    hookedObj.tmp2_successCallback = successCallback;
+    hookedObj.tmp2_errorCallback = errorCallback;
+    hookedObj.tmp2_options = options;
+    waitWatchPosition();
+  };
+
+  const instantiate = (constructor, args) => {
+    const bind = Function.bind;
+    const unbind = bind.bind(bind);
+    return new (unbind(constructor, null).apply(null, args));
+  }
+
+  Blob = function (_Blob) {
+    function secureBlob(...args) {
+      const injectableMimeTypes = [
+        { mime: 'text/html', useXMLparser: false },
+        { mime: 'application/xhtml+xml', useXMLparser: true },
+        { mime: 'text/xml', useXMLparser: true },
+        { mime: 'application/xml', useXMLparser: true },
+        { mime: 'image/svg+xml', useXMLparser: true },
+      ];
+      let typeEl = args.find(arg => (typeof arg === 'object') && (typeof arg.type === 'string') && (arg.type));
+
+      if (typeof typeEl !== 'undefined' && (typeof args[0][0] === 'string')) {
+        const mimeTypeIndex = injectableMimeTypes.findIndex(mimeType => mimeType.mime.toLowerCase() === typeEl.type.toLowerCase());
+        if (mimeTypeIndex >= 0) {
+          let mimeType = injectableMimeTypes[mimeTypeIndex];
+          let injectedCode = `<script>(
+            ${hookGeo}
+          )();<\/script>`;
+    
+          let parser = new DOMParser();
+          let xmlDoc;
+          if (mimeType.useXMLparser === true) {
+            xmlDoc = parser.parseFromString(args[0].join(''), mimeType.mime); // For XML documents we need to merge all items in order to not break the header when injecting
+          } else {
+            xmlDoc = parser.parseFromString(args[0][0], mimeType.mime);
+          }
+
+          if (xmlDoc.getElementsByTagName("parsererror").length === 0) { // if no errors were found while parsing...
+            xmlDoc.documentElement.insertAdjacentHTML('afterbegin', injectedCode);
+    
+            if (mimeType.useXMLparser === true) {
+              args[0] = [new XMLSerializer().serializeToString(xmlDoc)];
+            } else {
+              args[0][0] = xmlDoc.documentElement.outerHTML;
+            }
+          }
+        }
+      }
+
+      return instantiate(_Blob, args); // arguments?
+    }
+
+    // Copy props and methods
+    let propNames = Object.getOwnPropertyNames(_Blob);
+    for (let i = 0; i < propNames.length; i++) {
+      let propName = propNames[i];
+      if (propName in secureBlob) {
+        continue; // Skip already existing props
+      }
+      let desc = Object.getOwnPropertyDescriptor(_Blob, propName);
+      Object.defineProperty(secureBlob, propName, desc);
+    }
+
+    secureBlob.prototype = _Blob.prototype;
+    return secureBlob;
+  }(Blob);
+
+  window.addEventListener('message', function (event) {
+    if (event.source !== window) {
+      return;
+    }
+    const message = event.data;
+    switch (message.method) {
+      case 'updateLocation':
+        if ((typeof message.info === 'object') && (typeof message.info.coords === 'object')) {
+          hookedObj.genLat = message.info.coords.lat;
+          hookedObj.genLon = message.info.coords.lon;
+          hookedObj.fakeGeo = message.info.fakeIt;
+        }
+        break;
+      default:
+        break;
+    }
+  }, false);
+  //]]>
+}hookGeo();})()</script>
+    
+    <link rel="icon" href="http://localhost:3000/favicon.ico">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#000000">
+    <meta name="description" content="Web site created using create-react-app">
+    <link rel="apple-touch-icon" href="http://localhost:3000/logo192.png">
+    <!--
+      manifest.json provides metadata used when your web app is installed on a
+      user's mobile device or desktop. See https://developers.google.com/web/fundamentals/web-app-manifest/
+    -->
+    <link rel="manifest" href="http://localhost:3000/manifest.json">
+    <!--
+      Notice the use of  in the tags above.
+      It will be replaced with the URL of the `public` folder during the build.
+      Only files inside the `public` folder can be referenced from the HTML.
+
+      Unlike "/favicon.ico" or "favicon.ico", "/favicon.ico" will
+      work correctly both with client-side routing and a non-root public URL.
+      Learn how to configure a non-root public URL by running `npm run build`.
+    -->
+    <title>React App</title>
+  <script defer="" src="./React App_files/bundle.js"></script><style>/* merriweather-cyrillic-ext-400-normal*/
+@font-face {
+  font-family: 'Merriweather';
+  font-style: normal;
+  font-display: swap;
+  font-weight: 400;
+  src: url(http://localhost:3000/static/media/merriweather-cyrillic-ext-400-normal.2a880e22b1b888ab5465.woff2) format('woff2'), url(http://localhost:3000/static/media/merriweather-all-400-normal.5e7a0e6a9b864b89292d.woff) format('woff');
+  unicode-range: U+0460-052F,U+1C80-1C88,U+20B4,U+2DE0-2DFF,U+A640-A69F,U+FE2E-FE2F;
+}
+/* merriweather-cyrillic-400-normal*/
+@font-face {
+  font-family: 'Merriweather';
+  font-style: normal;
+  font-display: swap;
+  font-weight: 400;
+  src: url(http://localhost:3000/static/media/merriweather-cyrillic-400-normal.fde0b55efc50742fb57f.woff2) format('woff2'), url(http://localhost:3000/static/media/merriweather-all-400-normal.5e7a0e6a9b864b89292d.woff) format('woff');
+  unicode-range: U+0301,U+0400-045F,U+0490-0491,U+04B0-04B1,U+2116;
+}
+/* merriweather-vietnamese-400-normal*/
+@font-face {
+  font-family: 'Merriweather';
+  font-style: normal;
+  font-display: swap;
+  font-weight: 400;
+  src: url(http://localhost:3000/static/media/merriweather-vietnamese-400-normal.1c4607f612e73642c77e.woff2) format('woff2'), url(http://localhost:3000/static/media/merriweather-all-400-normal.5e7a0e6a9b864b89292d.woff) format('woff');
+  unicode-range: U+0102-0103,U+0110-0111,U+0128-0129,U+0168-0169,U+01A0-01A1,U+01AF-01B0,U+1EA0-1EF9,U+20AB;
+}
+/* merriweather-latin-ext-400-normal*/
+@font-face {
+  font-family: 'Merriweather';
+  font-style: normal;
+  font-display: swap;
+  font-weight: 400;
+  src: url(http://localhost:3000/static/media/merriweather-latin-ext-400-normal.4657f5ab02d5923d223f.woff2) format('woff2'), url(http://localhost:3000/static/media/merriweather-all-400-normal.5e7a0e6a9b864b89292d.woff) format('woff');
+  unicode-range: U+0100-024F,U+0259,U+1E00-1EFF,U+2020,U+20A0-20AB,U+20AD-20CF,U+2113,U+2C60-2C7F,U+A720-A7FF;
+}
+/* merriweather-latin-400-normal*/
+@font-face {
+  font-family: 'Merriweather';
+  font-style: normal;
+  font-display: swap;
+  font-weight: 400;
+  src: url(http://localhost:3000/static/media/merriweather-latin-400-normal.e009f21405b4d7e89367.woff2) format('woff2'), url(http://localhost:3000/static/media/merriweather-all-400-normal.5e7a0e6a9b864b89292d.woff) format('woff');
+  unicode-range: U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+2000-206F,U+2074,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD;
+}
+
+/*# sourceMappingURL=data:application/json;base64,eyJ2ZXJzaW9uIjozLCJzb3VyY2VzIjpbIndlYnBhY2s6Ly8uL25vZGVfbW9kdWxlcy9AZm9udHNvdXJjZS9tZXJyaXdlYXRoZXIvaW5kZXguY3NzIl0sIm5hbWVzIjpbXSwibWFwcGluZ3MiOiJBQUFBLHdDQUF3QztBQUN4QztFQUNFLDJCQUEyQjtFQUMzQixrQkFBa0I7RUFDbEIsa0JBQWtCO0VBQ2xCLGdCQUFnQjtFQUNoQixvSEFBOEk7RUFDOUksaUZBQWlGO0FBQ25GO0FBQ0Esb0NBQW9DO0FBQ3BDO0VBQ0UsMkJBQTJCO0VBQzNCLGtCQUFrQjtFQUNsQixrQkFBa0I7RUFDbEIsZ0JBQWdCO0VBQ2hCLG9IQUEwSTtFQUMxSSxnRUFBZ0U7QUFDbEU7QUFDQSxzQ0FBc0M7QUFDdEM7RUFDRSwyQkFBMkI7RUFDM0Isa0JBQWtCO0VBQ2xCLGtCQUFrQjtFQUNsQixnQkFBZ0I7RUFDaEIsb0hBQTRJO0VBQzVJLHlHQUF5RztBQUMzRztBQUNBLHFDQUFxQztBQUNyQztFQUNFLDJCQUEyQjtFQUMzQixrQkFBa0I7RUFDbEIsa0JBQWtCO0VBQ2xCLGdCQUFnQjtFQUNoQixvSEFBMkk7RUFDM0ksMkdBQTJHO0FBQzdHO0FBQ0EsaUNBQWlDO0FBQ2pDO0VBQ0UsMkJBQTJCO0VBQzNCLGtCQUFrQjtFQUNsQixrQkFBa0I7RUFDbEIsZ0JBQWdCO0VBQ2hCLG9IQUF1STtFQUN2SSx5SkFBeUo7QUFDM0oiLCJzb3VyY2VzQ29udGVudCI6WyIvKiBtZXJyaXdlYXRoZXItY3lyaWxsaWMtZXh0LTQwMC1ub3JtYWwqL1xuQGZvbnQtZmFjZSB7XG4gIGZvbnQtZmFtaWx5OiAnTWVycml3ZWF0aGVyJztcbiAgZm9udC1zdHlsZTogbm9ybWFsO1xuICBmb250LWRpc3BsYXk6IHN3YXA7XG4gIGZvbnQtd2VpZ2h0OiA0MDA7XG4gIHNyYzogdXJsKCcuL2ZpbGVzL21lcnJpd2VhdGhlci1jeXJpbGxpYy1leHQtNDAwLW5vcm1hbC53b2ZmMicpIGZvcm1hdCgnd29mZjInKSwgdXJsKCcuL2ZpbGVzL21lcnJpd2VhdGhlci1hbGwtNDAwLW5vcm1hbC53b2ZmJykgZm9ybWF0KCd3b2ZmJyk7XG4gIHVuaWNvZGUtcmFuZ2U6IFUrMDQ2MC0wNTJGLFUrMUM4MC0xQzg4LFUrMjBCNCxVKzJERTAtMkRGRixVK0E2NDAtQTY5RixVK0ZFMkUtRkUyRjtcbn1cbi8qIG1lcnJpd2VhdGhlci1jeXJpbGxpYy00MDAtbm9ybWFsKi9cbkBmb250LWZhY2Uge1xuICBmb250LWZhbWlseTogJ01lcnJpd2VhdGhlcic7XG4gIGZvbnQtc3R5bGU6IG5vcm1hbDtcbiAgZm9udC1kaXNwbGF5OiBzd2FwO1xuICBmb250LXdlaWdodDogNDAwO1xuICBzcmM6IHVybCgnLi9maWxlcy9tZXJyaXdlYXRoZXItY3lyaWxsaWMtNDAwLW5vcm1hbC53b2ZmMicpIGZvcm1hdCgnd29mZjInKSwgdXJsKCcuL2ZpbGVzL21lcnJpd2VhdGhlci1hbGwtNDAwLW5vcm1hbC53b2ZmJykgZm9ybWF0KCd3b2ZmJyk7XG4gIHVuaWNvZGUtcmFuZ2U6IFUrMDMwMSxVKzA0MDAtMDQ1RixVKzA0OTAtMDQ5MSxVKzA0QjAtMDRCMSxVKzIxMTY7XG59XG4vKiBtZXJyaXdlYXRoZXItdmlldG5hbWVzZS00MDAtbm9ybWFsKi9cbkBmb250LWZhY2Uge1xuICBmb250LWZhbWlseTogJ01lcnJpd2VhdGhlcic7XG4gIGZvbnQtc3R5bGU6IG5vcm1hbDtcbiAgZm9udC1kaXNwbGF5OiBzd2FwO1xuICBmb250LXdlaWdodDogNDAwO1xuICBzcmM6IHVybCgnLi9maWxlcy9tZXJyaXdlYXRoZXItdmlldG5hbWVzZS00MDAtbm9ybWFsLndvZmYyJykgZm9ybWF0KCd3b2ZmMicpLCB1cmwoJy4vZmlsZXMvbWVycml3ZWF0aGVyLWFsbC00MDAtbm9ybWFsLndvZmYnKSBmb3JtYXQoJ3dvZmYnKTtcbiAgdW5pY29kZS1yYW5nZTogVSswMTAyLTAxMDMsVSswMTEwLTAxMTEsVSswMTI4LTAxMjksVSswMTY4LTAxNjksVSswMUEwLTAxQTEsVSswMUFGLTAxQjAsVSsxRUEwLTFFRjksVSsyMEFCO1xufVxuLyogbWVycml3ZWF0aGVyLWxhdGluLWV4dC00MDAtbm9ybWFsKi9cbkBmb250LWZhY2Uge1xuICBmb250LWZhbWlseTogJ01lcnJpd2VhdGhlcic7XG4gIGZvbnQtc3R5bGU6IG5vcm1hbDtcbiAgZm9udC1kaXNwbGF5OiBzd2FwO1xuICBmb250LXdlaWdodDogNDAwO1xuICBzcmM6IHVybCgnLi9maWxlcy9tZXJyaXdlYXRoZXItbGF0aW4tZXh0LTQwMC1ub3JtYWwud29mZjInKSBmb3JtYXQoJ3dvZmYyJyksIHVybCgnLi9maWxlcy9tZXJyaXdlYXRoZXItYWxsLTQwMC1ub3JtYWwud29mZicpIGZvcm1hdCgnd29mZicpO1xuICB1bmljb2RlLXJhbmdlOiBVKzAxMDAtMDI0RixVKzAyNTksVSsxRTAwLTFFRkYsVSsyMDIwLFUrMjBBMC0yMEFCLFUrMjBBRC0yMENGLFUrMjExMyxVKzJDNjAtMkM3RixVK0E3MjAtQTdGRjtcbn1cbi8qIG1lcnJpd2VhdGhlci1sYXRpbi00MDAtbm9ybWFsKi9cbkBmb250LWZhY2Uge1xuICBmb250LWZhbWlseTogJ01lcnJpd2VhdGhlcic7XG4gIGZvbnQtc3R5bGU6IG5vcm1hbDtcbiAgZm9udC1kaXNwbGF5OiBzd2FwO1xuICBmb250LXdlaWdodDogNDAwO1xuICBzcmM6IHVybCgnLi9maWxlcy9tZXJyaXdlYXRoZXItbGF0aW4tNDAwLW5vcm1hbC53b2ZmMicpIGZvcm1hdCgnd29mZjInKSwgdXJsKCcuL2ZpbGVzL21lcnJpd2VhdGhlci1hbGwtNDAwLW5vcm1hbC53b2ZmJykgZm9ybWF0KCd3b2ZmJyk7XG4gIHVuaWNvZGUtcmFuZ2U6IFUrMDAwMC0wMEZGLFUrMDEzMSxVKzAxNTItMDE1MyxVKzAyQkItMDJCQyxVKzAyQzYsVSswMkRBLFUrMDJEQyxVKzIwMDAtMjA2RixVKzIwNzQsVSsyMEFDLFUrMjEyMixVKzIxOTEsVSsyMTkzLFUrMjIxMixVKzIyMTUsVStGRUZGLFUrRkZGRDtcbn1cbiJdLCJzb3VyY2VSb290IjoiIn0= */</style><style data-emotion="css" data-s="">.css-28bz6f-MuiContainer-root{width:100%;margin-left:auto;box-sizing:border-box;margin-right:auto;display:block;padding-left:16px;padding-right:16px;display:-webkit-box;display:-webkit-flex;display:-ms-flexbox;display:flex;position:absolute;width:100%;height:100%;left:0;top:0;-webkit-align-items:center;-webkit-box-align:center;-ms-flex-align:center;align-items:center;-webkit-flex-direction:column;-ms-flex-direction:column;flex-direction:column;font-family:Merriweather;}</style><style data-emotion="css" data-s="">@media (min-width:600px){.css-28bz6f-MuiContainer-root{padding-left:24px;padding-right:24px;}}</style><style data-emotion="css" data-s="">.css-1xcmbzp-MuiAppBar-root{display:-webkit-box;display:-webkit-flex;display:-ms-flexbox;display:flex;-webkit-flex-direction:column;-ms-flex-direction:column;flex-direction:column;width:100%;box-sizing:border-box;-webkit-flex-shrink:0;-ms-flex-negative:0;flex-shrink:0;position:-webkit-sticky;position:sticky;z-index:1100;top:0;left:auto;right:0;background-color:#000;color:#fff;}</style><style data-emotion="css" data-s="">.css-jhcmp4-MuiPaper-root-MuiAppBar-root{background-color:#fff;color:rgba(0, 0, 0, 0.87);-webkit-transition:box-shadow 300ms cubic-bezier(0.4, 0, 0.2, 1) 0ms;transition:box-shadow 300ms cubic-bezier(0.4, 0, 0.2, 1) 0ms;box-shadow:none;display:-webkit-box;display:-webkit-flex;display:-ms-flexbox;display:flex;-webkit-flex-direction:column;-ms-flex-direction:column;flex-direction:column;width:100%;box-sizing:border-box;-webkit-flex-shrink:0;-ms-flex-negative:0;flex-shrink:0;position:-webkit-sticky;position:sticky;z-index:1100;top:0;left:auto;right:0;background-color:#000;color:#fff;}</style><style data-emotion="css" data-s="">.css-hyum1k-MuiToolbar-root{position:relative;display:-webkit-box;display:-webkit-flex;display:-ms-flexbox;display:flex;-webkit-align-items:center;-webkit-box-align:center;-ms-flex-align:center;align-items:center;padding-left:16px;padding-right:16px;min-height:56px;}</style><style data-emotion="css" data-s="">@media (min-width:600px){.css-hyum1k-MuiToolbar-root{padding-left:24px;padding-right:24px;}}</style><style data-emotion="css" data-s="">@media (min-width:0px){@media (orientation: landscape){.css-hyum1k-MuiToolbar-root{min-height:48px;}}}</style><style data-emotion="css" data-s="">@media (min-width:600px){.css-hyum1k-MuiToolbar-root{min-height:64px;}}</style><style data-emotion="css" data-s="">.css-4g5a50-MuiStack-root{display:-webkit-box;display:-webkit-flex;display:-ms-flexbox;display:flex;-webkit-flex-direction:row;-ms-flex-direction:row;flex-direction:row;-webkit-box-pack:justify;-webkit-justify-content:space-between;justify-content:space-between;-webkit-align-items:center;-webkit-box-align:center;-ms-flex-align:center;align-items:center;-webkit-flex:1;-ms-flex:1;flex:1;}</style><style data-emotion="css" data-s="">.css-1oat4mv-MuiTypography-root{margin:0;font-family:Merriweather;font-weight:300;font-size:3.75rem;line-height:1.2;color:black;font-weight:700;}</style><style data-emotion="css" data-s="">.css-1efp7d3-MuiTypography-root{margin:0;font-family:Merriweather;font-weight:300;font-size:3.75rem;line-height:1.2;color:black;}</style><style data-emotion="css" data-s="">.css-68gvqn-MuiTabs-root{overflow:hidden;min-height:48px;-webkit-overflow-scrolling:touch;display:-webkit-box;display:-webkit-flex;display:-ms-flexbox;display:flex;margin-bottom:16px;}</style><style data-emotion="css" data-s="">.css-68gvqn-MuiTabs-root .MuiTabs-scrollButtons{}</style><style data-emotion="css" data-s="">@media (max-width:599.95px){.css-68gvqn-MuiTabs-root .MuiTabs-scrollButtons{display:none;}}</style><style data-emotion="css" data-s="">.css-jpln7h-MuiTabs-scroller{position:relative;display:inline-block;-webkit-flex:1 1 auto;-ms-flex:1 1 auto;flex:1 1 auto;white-space:nowrap;overflow-x:hidden;width:100%;}</style><style data-emotion="css" data-s="">.css-1wf8b0h-MuiTabs-flexContainer{display:-webkit-box;display:-webkit-flex;display:-ms-flexbox;display:flex;-webkit-box-pack:center;-ms-flex-pack:center;-webkit-justify-content:center;justify-content:center;}</style><style data-emotion="css" data-s="">.css-q20cam-MuiTab-root{font-family:Merriweather;font-weight:500;font-size:0.875rem;line-height:1.25;text-transform:uppercase;max-width:360px;min-width:90px;position:relative;min-height:48px;-webkit-flex-shrink:0;-ms-flex-negative:0;flex-shrink:0;padding:12px 16px;overflow:hidden;white-space:normal;text-align:center;color:rgba(0, 0, 0, 0.6);font-family:Merriweather;}</style><style data-emotion="css" data-s="">.css-q20cam-MuiTab-root.Mui-selected{color:#000;}</style><style data-emotion="css" data-s="">.css-q20cam-MuiTab-root.Mui-disabled{color:rgba(0, 0, 0, 0.38);}</style><style data-emotion="css" data-s="">.css-fgffox-MuiButtonBase-root-MuiTab-root{display:-webkit-inline-box;display:-webkit-inline-flex;display:-ms-inline-flexbox;display:inline-flex;-webkit-align-items:center;-webkit-box-align:center;-ms-flex-align:center;align-items:center;-webkit-box-pack:center;-ms-flex-pack:center;-webkit-justify-content:center;justify-content:center;position:relative;box-sizing:border-box;-webkit-tap-highlight-color:transparent;background-color:transparent;outline:0;border:0;margin:0;border-radius:0;padding:0;cursor:pointer;-webkit-user-select:none;-moz-user-select:none;-ms-user-select:none;user-select:none;vertical-align:middle;-moz-appearance:none;-webkit-appearance:none;-webkit-text-decoration:none;text-decoration:none;color:inherit;font-family:Merriweather;font-weight:500;font-size:0.875rem;line-height:1.25;text-transform:uppercase;max-width:360px;min-width:90px;position:relative;min-height:48px;-webkit-flex-shrink:0;-ms-flex-negative:0;flex-shrink:0;padding:12px 16px;overflow:hidden;white-space:normal;text-align:center;color:rgba(0, 0, 0, 0.6);font-family:Merriweather;}</style><style data-emotion="css" data-s="">.css-fgffox-MuiButtonBase-root-MuiTab-root::-moz-focus-inner{border-style:none;}</style><style data-emotion="css" data-s="">.css-fgffox-MuiButtonBase-root-MuiTab-root.Mui-disabled{pointer-events:none;cursor:default;}</style><style data-emotion="css" data-s="">@media print{.css-fgffox-MuiButtonBase-root-MuiTab-root{-webkit-print-color-adjust:exact;color-adjust:exact;}}</style><style data-emotion="css" data-s="">.css-fgffox-MuiButtonBase-root-MuiTab-root.Mui-selected{color:#000;}</style><style data-emotion="css" data-s="">.css-fgffox-MuiButtonBase-root-MuiTab-root.Mui-disabled{color:rgba(0, 0, 0, 0.38);}</style><style data-emotion="css" data-s="">.css-i4bv87-MuiSvgIcon-root{-webkit-user-select:none;-moz-user-select:none;-ms-user-select:none;user-select:none;width:1em;height:1em;display:inline-block;fill:currentColor;-webkit-flex-shrink:0;-ms-flex-negative:0;flex-shrink:0;-webkit-transition:fill 200ms cubic-bezier(0.4, 0, 0.2, 1) 0ms;transition:fill 200ms cubic-bezier(0.4, 0, 0.2, 1) 0ms;font-size:1.5rem;}</style><style data-emotion="css" data-s="">.css-13zgqbm-MuiTabs-indicator{position:absolute;height:2px;bottom:0;width:100%;-webkit-transition:all 300ms cubic-bezier(0.4, 0, 0.2, 1) 0ms;transition:all 300ms cubic-bezier(0.4, 0, 0.2, 1) 0ms;background-color:#000;}</style><style data-emotion="css" data-s="">.css-1p5q5e5-MuiStack-root{display:-webkit-box;display:-webkit-flex;display:-ms-flexbox;display:flex;-webkit-flex-direction:column;-ms-flex-direction:column;flex-direction:column;}</style><style data-emotion="css" data-s="">.css-1p5q5e5-MuiStack-root>:not(style)+:not(style){margin:0;margin-top:16px;}</style><style data-emotion="css" data-s="">.css-1qxzxck-MuiCard-root{overflow:hidden;padding:16px;}</style><style data-emotion="css" data-s="">.css-7fmqh0-MuiPaper-root-MuiCard-root{background-color:#fff;color:rgba(0, 0, 0, 0.87);-webkit-transition:box-shadow 300ms cubic-bezier(0.4, 0, 0.2, 1) 0ms;transition:box-shadow 300ms cubic-bezier(0.4, 0, 0.2, 1) 0ms;border-radius:4px;box-shadow:0px 2px 1px -1px rgba(0,0,0,0.2),0px 1px 1px 0px rgba(0,0,0,0.14),0px 1px 3px 0px rgba(0,0,0,0.12);overflow:hidden;padding:16px;}</style><style data-emotion="css" data-s="">.css-nen11g-MuiStack-root{display:-webkit-box;display:-webkit-flex;display:-ms-flexbox;display:flex;-webkit-flex-direction:column;-ms-flex-direction:column;flex-direction:column;}</style><style data-emotion="css" data-s="">.css-1sbcfuw-MuiTypography-root{margin:0;font-family:Merriweather;font-weight:500;font-size:1.25rem;line-height:1.6;font-family:Merriweather;font-weight:700;}</style><style data-emotion="css" data-s="">.css-1y5hu21-MuiTypography-root{margin:0;font-family:Merriweather;font-weight:500;font-size:0.875rem;line-height:1.57;color:grey;font-style:italic;margin-top:8px;}</style><style data-emotion="css" data-s="">.css-1h2yvsj-MuiStack-root{display:-webkit-box;display:-webkit-flex;display:-ms-flexbox;display:flex;-webkit-flex-direction:column;-ms-flex-direction:column;flex-direction:column;margin-top:16px;}</style><style data-emotion="css" data-s="">.css-1okj3ks-MuiStack-root{display:-webkit-box;display:-webkit-flex;display:-ms-flexbox;display:flex;-webkit-flex-direction:column;-ms-flex-direction:column;flex-direction:column;}</style><style data-emotion="css" data-s="">.css-1okj3ks-MuiStack-root>:not(style)+:not(style){margin:0;margin-top:8px;}</style><style data-emotion="css" data-s="">.css-1nm98ru-MuiStack-root{display:-webkit-box;display:-webkit-flex;display:-ms-flexbox;display:flex;-webkit-flex-direction:column;-ms-flex-direction:column;flex-direction:column;-webkit-flex-direction:row;-ms-flex-direction:row;flex-direction:row;-webkit-align-items:center;-webkit-box-align:center;-ms-flex-align:center;align-items:center;-webkit-box-pack:start;-ms-flex-pack:start;-webkit-justify-content:flex-start;justify-content:flex-start;}</style><style data-emotion="css" data-s="">.css-1nm98ru-MuiStack-root>:not(style)+:not(style){margin:0;margin-top:8px;}</style><style data-emotion="css" data-s="">.css-tebo92-MuiAvatar-root{position:relative;display:-webkit-box;display:-webkit-flex;display:-ms-flexbox;display:flex;-webkit-align-items:center;-webkit-box-align:center;-ms-flex-align:center;align-items:center;-webkit-box-pack:center;-ms-flex-pack:center;-webkit-justify-content:center;justify-content:center;-webkit-flex-shrink:0;-ms-flex-negative:0;flex-shrink:0;width:40px;height:40px;font-family:Merriweather;font-size:1.25rem;line-height:1;border-radius:50%;overflow:hidden;-webkit-user-select:none;-moz-user-select:none;-ms-user-select:none;user-select:none;margin-right:8px;border:2px solid grey;}</style><style data-emotion="css" data-s="">.css-1pqm26d-MuiAvatar-img{width:100%;height:100%;text-align:center;object-fit:cover;color:transparent;text-indent:10000px;}</style><style data-emotion="css" data-s="">.css-4a26cb-MuiTypography-root{margin:0;font-family:Merriweather;font-weight:400;font-size:1rem;line-height:1.75;font-weight:700;}</style><style data-emotion="css" data-s="">.css-1tzncj3-MuiTypography-root{margin:0;font-family:Merriweather;font-weight:400;font-size:0.75rem;line-height:1.66;color:grey;}</style><style data-emotion="css" data-s="">.css-ku2emo-MuiStack-root{display:-webkit-box;display:-webkit-flex;display:-ms-flexbox;display:flex;-webkit-flex-direction:column;-ms-flex-direction:column;flex-direction:column;-webkit-flex-direction:row;-ms-flex-direction:row;flex-direction:row;}</style><style data-emotion="css" data-s="">.css-8je8zh-MuiTouchRipple-root{overflow:hidden;pointer-events:none;position:absolute;z-index:0;top:0;right:0;bottom:0;left:0;border-radius:inherit;}</style><style data-emotion="css" data-s="">.css-5g5dau-MuiStack-root{display:-webkit-box;display:-webkit-flex;display:-ms-flexbox;display:flex;-webkit-flex-direction:column;-ms-flex-direction:column;flex-direction:column;-webkit-flex-direction:row;-ms-flex-direction:row;flex-direction:row;}</style><style data-emotion="css" data-s="">.css-5g5dau-MuiStack-root>:not(style)+:not(style){margin:0;margin-top:16px;}</style><style data-emotion="css" data-s="">.css-1ebh1p9-MuiStack-root{display:-webkit-box;display:-webkit-flex;display:-ms-flexbox;display:flex;-webkit-flex-direction:column;-ms-flex-direction:column;flex-direction:column;-webkit-flex-direction:row;-ms-flex-direction:row;flex-direction:row;-webkit-box-pack:space-around;-ms-flex-pack:space-around;-webkit-justify-content:space-around;justify-content:space-around;}</style><style data-emotion="css" data-s="">.css-1ebh1p9-MuiStack-root>:not(style)+:not(style){margin:0;margin-top:16px;}</style></head>
+  <body>
+    <noscript>You need to enable JavaScript to run this app.</noscript>
+    <div id="root"><div class="MuiContainer-root css-28bz6f-MuiContainer-root"><header class="MuiPaper-root MuiPaper-elevation MuiPaper-elevation0 MuiAppBar-root MuiAppBar-colorPrimary MuiAppBar-positionSticky css-jhcmp4-MuiPaper-root-MuiAppBar-root" style="background-color: white;"><div class="MuiToolbar-root MuiToolbar-gutters MuiToolbar-regular css-hyum1k-MuiToolbar-root" style="flex: 1 1 0%; justify-content: space-between;"><div class="css-4g5a50-MuiStack-root"><h2 class="MuiTypography-root MuiTypography-h2 css-1oat4mv-MuiTypography-root">न</h2><h2 class="MuiTypography-root MuiTypography-h2 css-1efp7d3-MuiTypography-root">🇮🇳</h2></div></div></header><div class="MuiTabs-root css-68gvqn-MuiTabs-root"><div class="MuiTabs-scroller MuiTabs-fixed css-jpln7h-MuiTabs-scroller" style="overflow: hidden; margin-bottom: 0px;"><div class="MuiTabs-flexContainer MuiTabs-centered css-1wf8b0h-MuiTabs-flexContainer" role="tablist"><button class="MuiButtonBase-root MuiTab-root MuiTab-textColorPrimary Mui-selected css-fgffox-MuiButtonBase-root-MuiTab-root" tabindex="0" type="button" role="tab" aria-selected="true" id="simple-tab-0" aria-controls="simple-tabpanel-0"><svg class="MuiSvgIcon-root MuiSvgIcon-fontSizeMedium css-i4bv87-MuiSvgIcon-root" focusable="false" aria-hidden="true" viewBox="0 0 24 24" data-testid="HomeIcon"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"></path></svg><span class="MuiTouchRipple-root css-8je8zh-MuiTouchRipple-root"></span></button><button class="MuiButtonBase-root MuiTab-root MuiTab-textColorPrimary css-fgffox-MuiButtonBase-root-MuiTab-root" tabindex="-1" type="button" role="tab" aria-selected="false" id="simple-tab-1" aria-controls="simple-tabpanel-1"><svg class="MuiSvgIcon-root MuiSvgIcon-fontSizeMedium css-i4bv87-MuiSvgIcon-root" focusable="false" aria-hidden="true" viewBox="0 0 24 24" data-testid="WorkIcon"><path d="M20 6h-4V4c0-1.11-.89-2-2-2h-4c-1.11 0-2 .89-2 2v2H4c-1.11 0-1.99.89-1.99 2L2 19c0 1.11.89 2 2 2h16c1.11 0 2-.89 2-2V8c0-1.11-.89-2-2-2zm-6 0h-4V4h4v2z"></path></svg><span class="MuiTouchRipple-root css-8je8zh-MuiTouchRipple-root"></span></button><button class="MuiButtonBase-root MuiTab-root MuiTab-textColorPrimary css-fgffox-MuiButtonBase-root-MuiTab-root" tabindex="-1" type="button" role="tab" aria-selected="false" val="proj" id="simple-tab-2" aria-controls="simple-tabpanel-2"><svg class="MuiSvgIcon-root MuiSvgIcon-fontSizeMedium css-i4bv87-MuiSvgIcon-root" focusable="false" aria-hidden="true" viewBox="0 0 24 24" data-testid="ConstructionIcon"><path d="m13.7826 15.1719 2.1213-2.1213 5.9963 5.9962-2.1213 2.1213zM17.5 10c1.93 0 3.5-1.57 3.5-3.5 0-.58-.16-1.12-.41-1.6l-2.7 2.7-1.49-1.49 2.7-2.7c-.48-.25-1.02-.41-1.6-.41C15.57 3 14 4.57 14 6.5c0 .41.08.8.21 1.16l-1.85 1.85-1.78-1.78.71-.71-1.41-1.41L12 3.49c-1.17-1.17-3.07-1.17-4.24 0L4.22 7.03l1.41 1.41H2.81l-.71.71 3.54 3.54.71-.71V9.15l1.41 1.41.71-.71 1.78 1.78-7.41 7.41 2.12 2.12L16.34 9.79c.36.13.75.21 1.16.21z"></path></svg><span class="MuiTouchRipple-root css-8je8zh-MuiTouchRipple-root"></span></button><button class="MuiButtonBase-root MuiTab-root MuiTab-textColorPrimary css-fgffox-MuiButtonBase-root-MuiTab-root" tabindex="-1" type="button" role="tab" aria-selected="false" val="res" id="simple-tab-2" aria-controls="simple-tabpanel-2"><svg class="MuiSvgIcon-root MuiSvgIcon-fontSizeMedium css-i4bv87-MuiSvgIcon-root" focusable="false" aria-hidden="true" viewBox="0 0 24 24" data-testid="InsertDriveFileIcon"><path d="M6 2c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6H6zm7 7V3.5L18.5 9H13z"></path></svg><span class="MuiTouchRipple-root css-8je8zh-MuiTouchRipple-root"></span></button></div><span class="MuiTabs-indicator css-13zgqbm-MuiTabs-indicator" style="left: 0px; width: 90px;"></span></div></div><div class="css-1p5q5e5-MuiStack-root"><div class="MuiPaper-root MuiPaper-elevation MuiPaper-rounded MuiPaper-elevation1 MuiCard-root css-7fmqh0-MuiPaper-root-MuiCard-root" spacing="2"><div class="css-nen11g-MuiStack-root"><h6 class="MuiTypography-root MuiTypography-h6 css-1sbcfuw-MuiTypography-root">कर्मण्येवाधिकारस्ते मा फलेषु कदाचन </h6><h6 class="MuiTypography-root MuiTypography-subtitle2 css-1y5hu21-MuiTypography-root">You have a right to perform your prescribed duty, but you are not entitled to the fruits of actions.</h6></div><div class="css-1h2yvsj-MuiStack-root"><h6 class="MuiTypography-root MuiTypography-h6 css-1sbcfuw-MuiTypography-root">मा कर्मफलहेतुर्भूर्मा ते सङ्गोऽस्त्वकर्मणि</h6><h6 class="MuiTypography-root MuiTypography-subtitle2 css-1y5hu21-MuiTypography-root">Never consider yourself the cause of the results of your activities, and never be attached to not doing your duty</h6></div></div><div class="MuiPaper-root MuiPaper-elevation MuiPaper-rounded MuiPaper-elevation1 MuiCard-root css-7fmqh0-MuiPaper-root-MuiCard-root" alignitems="flex-start"><div class="css-1okj3ks-MuiStack-root"><div class="css-1nm98ru-MuiStack-root"><div class="MuiAvatar-root MuiAvatar-circular css-tebo92-MuiAvatar-root"><img src="./React App_files/1666589222098" class="MuiAvatar-img css-1pqm26d-MuiAvatar-img"></div><h6 class="MuiTypography-root MuiTypography-subtitle1 css-4a26cb-MuiTypography-root">Nirbhay S Narang</h6></div><span class="MuiTypography-root MuiTypography-caption css-1tzncj3-MuiTypography-root">CS @ Cornell. Interested in entrepreneurship, history, and philosophy. Either in Jaipur, India or Ithaca, NY.</span></div><div class="css-1ebh1p9-MuiStack-root"><a href="https://github.com/nirbhaysinghnarang" class="social-icon" aria-label="github" style="display: inline-block; width: 50px; height: 50px; position: relative; overflow: hidden; vertical-align: middle;"><div class="social-container" style="position: absolute; top: 0px; left: 0px; width: 100%; height: 100%;"><svg class="social-svg" viewBox="0 0 64 64" style="border-radius: 50%; position: absolute; top: 0px; left: 0px; width: 100%; height: 100%; fill-rule: evenodd;"><g class="social-svg-background" style="transition: fill 170ms ease-in-out 0s; fill: transparent;"><circle cx="32" cy="32" r="31"></circle></g><g class="social-svg-icon" style="transition: fill 170ms ease-in-out 0s; fill: transparent;"><path d="M32,16c-8.8,0-16,7.2-16,16c0,7.1,4.6,13.1,10.9,15.2 c0.8,0.1,1.1-0.3,1.1-0.8c0-0.4,0-1.4,0-2.7c-4.5,1-5.4-2.1-5.4-2.1c-0.7-1.8-1.8-2.3-1.8-2.3c-1.5-1,0.1-1,0.1-1 c1.6,0.1,2.5,1.6,2.5,1.6c1.4,2.4,3.7,1.7,4.7,1.3c0.1-1,0.6-1.7,1-2.1c-3.6-0.4-7.3-1.8-7.3-7.9c0-1.7,0.6-3.2,1.6-4.3 c-0.2-0.4-0.7-2,0.2-4.2c0,0,1.3-0.4,4.4,1.6c1.3-0.4,2.6-0.5,4-0.5c1.4,0,2.7,0.2,4,0.5c3.1-2.1,4.4-1.6,4.4-1.6 c0.9,2.2,0.3,3.8,0.2,4.2c1,1.1,1.6,2.5,1.6,4.3c0,6.1-3.7,7.5-7.3,7.9c0.6,0.5,1.1,1.5,1.1,3c0,2.1,0,3.9,0,4.4 c0,0.4,0.3,0.9,1.1,0.8C43.4,45.1,48,39.1,48,32C48,23.2,40.8,16,32,16z"></path></g><g class="social-svg-mask" style="transition: fill 170ms ease-in-out 0s; fill: rgb(36, 41, 46);"><path d="M0,0v64h64V0H0z M37.1,47.2c-0.8,0.2-1.1-0.3-1.1-0.8c0-0.5,0-2.3,0-4.4c0-1.5-0.5-2.5-1.1-3 c3.6-0.4,7.3-1.7,7.3-7.9c0-1.7-0.6-3.2-1.6-4.3c0.2-0.4,0.7-2-0.2-4.2c0,0-1.3-0.4-4.4,1.6c-1.3-0.4-2.6-0.5-4-0.5 c-1.4,0-2.7,0.2-4,0.5c-3.1-2.1-4.4-1.6-4.4-1.6c-0.9,2.2-0.3,3.8-0.2,4.2c-1,1.1-1.6,2.5-1.6,4.3c0,6.1,3.7,7.5,7.3,7.9 c-0.5,0.4-0.9,1.1-1,2.1c-0.9,0.4-3.2,1.1-4.7-1.3c0,0-0.8-1.5-2.5-1.6c0,0-1.6,0-0.1,1c0,0,1,0.5,1.8,2.3c0,0,0.9,3.1,5.4,2.1 c0,1.3,0,2.3,0,2.7c0,0.4-0.3,0.9-1.1,0.8C20.6,45.1,16,39.1,16,32c0-8.8,7.2-16,16-16c8.8,0,16,7.2,16,16 C48,39.1,43.4,45.1,37.1,47.2z"></path></g></svg></div></a><a href="https://www.linkedin.com/in/nirbhay-singh-narang-6188a11ab/" class="social-icon" aria-label="linkedin" style="display: inline-block; width: 50px; height: 50px; position: relative; overflow: hidden; vertical-align: middle;"><div class="social-container" style="position: absolute; top: 0px; left: 0px; width: 100%; height: 100%;"><svg class="social-svg" viewBox="0 0 64 64" style="border-radius: 50%; position: absolute; top: 0px; left: 0px; width: 100%; height: 100%; fill-rule: evenodd;"><g class="social-svg-background" style="transition: fill 170ms ease-in-out 0s; fill: transparent;"><circle cx="32" cy="32" r="31"></circle></g><g class="social-svg-icon" style="transition: fill 170ms ease-in-out 0s; fill: transparent;"><path d="M20.4,44h5.4V26.6h-5.4V44z M23.1,18c-1.7,0-3.1,1.4-3.1,3.1c0,1.7,1.4,3.1,3.1,3.1 c1.7,0,3.1-1.4,3.1-3.1C26.2,19.4,24.8,18,23.1,18z M39.5,26.2c-2.6,0-4.4,1.4-5.1,2.8h-0.1v-2.4h-5.2V44h5.4v-8.6 c0-2.3,0.4-4.5,3.2-4.5c2.8,0,2.8,2.6,2.8,4.6V44H46v-9.5C46,29.8,45,26.2,39.5,26.2z"></path></g><g class="social-svg-mask" style="transition: fill 170ms ease-in-out 0s; fill: rgb(0, 127, 177);"><path d="M0,0v64h64V0H0z M25.8,44h-5.4V26.6h5.4V44z M23.1,24.3c-1.7,0-3.1-1.4-3.1-3.1c0-1.7,1.4-3.1,3.1-3.1 c1.7,0,3.1,1.4,3.1,3.1C26.2,22.9,24.8,24.3,23.1,24.3z M46,44h-5.4v-8.4c0-2,0-4.6-2.8-4.6c-2.8,0-3.2,2.2-3.2,4.5V44h-5.4V26.6 h5.2V29h0.1c0.7-1.4,2.5-2.8,5.1-2.8c5.5,0,6.5,3.6,6.5,8.3V44z"></path></g></svg></div></a><a href="https://twitter.com/nirbhay_narang" class="social-icon" aria-label="twitter" style="display: inline-block; width: 50px; height: 50px; position: relative; overflow: hidden; vertical-align: middle;"><div class="social-container" style="position: absolute; top: 0px; left: 0px; width: 100%; height: 100%;"><svg class="social-svg" viewBox="0 0 64 64" style="border-radius: 50%; position: absolute; top: 0px; left: 0px; width: 100%; height: 100%; fill-rule: evenodd;"><g class="social-svg-background" style="transition: fill 170ms ease-in-out 0s; fill: transparent;"><circle cx="32" cy="32" r="31"></circle></g><g class="social-svg-icon" style="transition: fill 170ms ease-in-out 0s; fill: transparent;"><path d="m 48.1,22.1 c -1.223105,0.430685 -2.4,0.761371 -3.8,1 1.4,-0.8 2.4,-2.1 2.9,-3.6 -1.3,0.8 -2.7,1.3 -4.2,1.6 -1.2,-1.3 -3,-2.1 -4.8,-2.1 -3.6,0 -6.6,2.9 -6.6,6.6 0,0.5 0.1,1 0.2,1.5 -5.5,-0.3 -10.3,-2.9 -13.5,-6.9 -0.6,1 -0.9,2.1 -0.9,3.3 0,2.3 1.2,4.3 2.9,5.5 -1.1,0 -2.1,-0.3 -3,-0.8 v 0.1 c 0,3.2 2.3,5.8 5.3,6.4 -0.6,0.1 -1.1,0.2 -1.7,0.2 -0.4,0 -0.8,0 -1.2,-0.1 0.8,2.6 3.3,4.5 6.1,4.6 -2.2,1.8 -5.1,2.8 -8.2,2.8 -0.5,0 -1.1,0 -1.6,-0.1 C 18.9,44 22.4,45 26.1,45 38.2,45 44.43575,34.996634 44.67774,26.3 L 44.7,25.5 c 1.2,-1 2.5,-2.1 3.4,-3.4 z"></path></g><g class="social-svg-mask" style="transition: fill 170ms ease-in-out 0s; fill: rgb(0, 172, 237);"><path d="M0,0v64h64V0H0z M44.7,25.5c0,0.3,0,0.6,0,0.8C44.7,35,38.1,45,26.1,45c-3.7,0-7.2-1.1-10.1-2.9 c0.5,0.1,1,0.1,1.6,0.1c3.1,0,5.9-1,8.2-2.8c-2.9-0.1-5.3-2-6.1-4.6c0.4,0.1,0.8,0.1,1.2,0.1c0.6,0,1.2-0.1,1.7-0.2 c-3-0.6-5.3-3.3-5.3-6.4c0,0,0-0.1,0-0.1c0.9,0.5,1.9,0.8,3,0.8c-1.8-1.2-2.9-3.2-2.9-5.5c0-1.2,0.3-2.3,0.9-3.3 c3.2,4,8.1,6.6,13.5,6.9c-0.1-0.5-0.2-1-0.2-1.5c0-3.6,2.9-6.6,6.6-6.6c1.9,0,3.6,0.8,4.8,2.1c1.5-0.3,2.9-0.8,4.2-1.6 c-0.5,1.5-1.5,2.8-2.9,3.6c1.3-0.2,2.6-0.5,3.8-1C47.1,23.4,46,24.5,44.7,25.5z"></path></g></svg></div></a></div></div></div></div></div>
+    <!--
+      This HTML file is a template.
+      If you open it directly in the browser, you will see an empty page.
+
+      You can add webfonts, meta tags, or analytics to this file.
+      The build step will place the bundled scripts into the <body> tag.
+
+      To begin the development, run `npm start` or `yarn start`.
+      To create a production bundle, use `npm run build` or `yarn build`.
+    -->
+  
+
+<iframe id="webpack-dev-server-client-overlay" src="./React App_files/saved_resource.html" style="position: fixed; inset: 0px; width: 100vw; height: 100vh; border: none; z-index: 2147483647;"></iframe></body></html>
