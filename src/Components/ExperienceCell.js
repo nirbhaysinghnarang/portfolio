@@ -34,9 +34,9 @@ function Experience({ experience }) {
           </Typography>
         </Stack>
 
-        {/* <Typography variant="subtitle" sx={{ fontFamily: "Merriweather" }}>
+        <Typography variant="subtitle" sx={{ fontFamily: "Merriweather" }}>
           {experience.title}
-        </Typography> */}
+        </Typography>
         <Typography
           variant="subtitle2"
           sx={{ color: "grey", fontFamily: "Merriweather" }}

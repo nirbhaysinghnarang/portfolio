@@ -4,7 +4,7 @@ import { SocialIcon } from "react-social-icons";
 function Home() {
   return (
     <Stack spacing={2}>
-      <Card sx={{ p: 2 }} spacing={2}>
+      {/* <Card sx={{ p: 2 }} spacing={2}>
         <Stack>
           <Typography variant="h6" sx={{ fontFamily: "Merriweather" }}>
             कर्मण्येवाधिकारस्ते मा फलेषु कदाचन{" "}
@@ -30,7 +30,7 @@ function Home() {
             and never be attached to not doing your duty
           </Typography>
         </Stack>
-      </Card>
+      </Card> */}
       <Card alignItems="flex-start" sx={{ p: 2 }} flexDirection="row">
         <Stack spacing={1}>
           <Stack

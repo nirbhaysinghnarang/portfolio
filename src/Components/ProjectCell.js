@@ -42,6 +42,7 @@ function Project({ project }) {
                 size="small"
                 color="secondary"
                 variant="outlined"
+                style={{ color: "grey", borderColor: "grey" }}
               />
             );
           })}
