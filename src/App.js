@@ -93,7 +93,7 @@ function App() {
         {currentTab === "proj" && <ProjectCard />}
         {currentTab === "res" && (
           <iframe
-            src="assets/NirbhaySNarangResume.pdf"
+            src="assets/NirbhaySNarangResume_SWE.pdf"
             style={{ width: "100%", height: "100vh" }}
           ></iframe>
         )}

@@ -1,5 +1,21 @@
 const experience = [
   {
+    name: "Cornell Tech (Represent Research Group)",
+    location: "Remote",
+    stack: "HCI, React.js, Python",
+    title: "Student Researcher",
+    dates: "May 2023-Present ",
+    img: "https://brand.tech.cornell.edu/wp-content/uploads/2022/06/Twisted-T-Lockup-Cornell-Red.png",
+  },
+  {
+    name: "Swadesh",
+    location: "Remote",
+    stack: "Flutter,Dart",
+    title: "Software Engineering Intern",
+    dates: "Feb 2023-April 2023",
+    img: "https://media.licdn.com/dms/image/C4E0BAQFO0f8IHunNAQ/company-logo_200_200/0/1627649254166?e=2147483647&v=beta&t=UE_Nqsem44a8Yc_WJULM_0HONhnCGsswN08qgPjW4yg",
+  },
+  {
     name: "rapStudy",
     location: "Los Angeles, CA",
     stack: "React Native, Expo, Firebase, TS",

@@ -41,7 +41,7 @@ function Home() {
           >
             <Avatar
               sx={{ marginRight: 1, border: "2px solid grey" }}
-              src="https://media.licdn.com/dms/image/D4E03AQE-U_py2AyJ4Q/profile-displayphoto-shrink_800_800/0/1666589222098?e=1679529600&v=beta&t=aSkLfGnINZpBzsEkdzXVkROlaY1PXOhw31MyxBar-dI"
+              src="https://media.licdn.com/dms/image/D4D03AQFKSSdknm6Gbw/profile-displayphoto-shrink_400_400/0/1678768671610?e=1694044800&v=beta&t=PvR_v07JnGVdOasBeqXOwba_c-FYS7tm-0qXEgN_oj4"
             ></Avatar>
             <Stack>
               <Typography sx={{ fontWeight: "bold" }} variant="subtitle1">

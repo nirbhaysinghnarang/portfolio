@@ -31,10 +31,10 @@ function EducationCard() {
             </Typography>
           </Stack>
 
-          <Typography variant="caption">GPA: 3.92/4.00</Typography>
+          <Typography variant="caption">GPA: 6/4.00</Typography>
         </Stack>
         <Typography variant="caption" sx={{ color: "grey" }}>
-          Algorithms, Machine Learning, Functional Programming, Discrete Math,
+          Algorithms, Networks II, Functional Programming, Discrete Math,
           Networks, Linear Algebra, Statistics, OOP & DS
         </Typography>
       </Card>
