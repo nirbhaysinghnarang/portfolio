@@ -1,10 +1,18 @@
 const experience = [
   {
+    name: "The Roper Center",
+    location: "Remote",
+    stack: "Java Servlet, SpringBoot, React, jooq, enzyme, jest",
+    title: "Fall Software Engineering Co-op",
+    dates: "Aug 2023-Present ",
+    img: "https://yt3.googleusercontent.com/ytc/AOPolaSXqA6mvXk42J2ovkvwKpxPzIr07jSTpBFVZeL2=s900-c-k-c0x00ffffff-no-rj",
+  },
+  {
     name: "Cornell Tech (Represent Research Group)",
     location: "Remote",
     stack: "HCI, React.js, Python",
     title: "Student Researcher",
-    dates: "May 2023-Present ",
+    dates: "May 2023-Aug 2023 ",
     img: "https://brand.tech.cornell.edu/wp-content/uploads/2022/06/Twisted-T-Lockup-Cornell-Red.png",
   },
   {
