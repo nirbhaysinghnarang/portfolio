@@ -31,7 +31,7 @@ function EducationCard() {
             </Typography>
           </Stack>
 
-          <Typography variant="caption">GPA: 6/4.00</Typography>
+          <Typography variant="caption">GPA: 3.96/4.00</Typography>
         </Stack>
         <Typography variant="caption" sx={{ color: "grey" }}>
           Algorithms, Networks II, Functional Programming, Discrete Math,
@@ -109,3 +109,4 @@ function EducationCard() {
 }
 
 export default EducationCard;
+ 

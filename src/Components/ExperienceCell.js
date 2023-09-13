@@ -1,5 +1,6 @@
 import { Stack } from "@mui/system";
 import { Paper, Avatar, Typography } from "@mui/material";
+import { Experience as ExpType } from "../types/experience.type.ts";
 import "@fontsource/merriweather";
 
 function Experience({ experience }) {
@@ -22,7 +23,11 @@ function Experience({ experience }) {
                 variant="caption"
                 sx={{ fontFamily: "Merriweather", color: "grey" }}
               >
-                {experience.dates}
+                {experience.dates[0] && experience.dates[0].toISOString().slice(0, 10)}
+                {!experience.dates[1] && " to Present"}
+                {experience.dates[1] && (" to " + experience.dates[1].toISOString().slice(0, 10))}
+
+
               </Typography>
             </Stack>
           </Stack>
@@ -41,7 +46,7 @@ function Experience({ experience }) {
           variant="subtitle2"
           sx={{ color: "grey", fontFamily: "Merriweather" }}
         >
-          {experience.stack}
+          {experience.stack.join(', ')}
         </Typography>
       </Stack>
     </Paper>

@@ -1,4 +1,5 @@
-const projects = [
+import { Project } from "../types/project";
+const projects:Project[] = [
   {
     name: "SimPL",
     stack: "OCaml",

@@ -1,6 +1,6 @@
 import Project from "./ProjectCell";
-import projects from "../data/projects";
 import { Grid } from "@mui/material";
+import projects from "../data/project.ts";
 function ProjectCard() {
   return (
     <Grid container spacing={3}>

@@ -1,5 +1,5 @@
 import Experience from "./ExperienceCell";
-import experience from "../data/experience";
+import experience from "../data/experience.ts";
 import { Grid } from "@mui/material";
 function ExperienceCard() {
   return (
