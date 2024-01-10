@@ -1,11 +1,15 @@
-import logo from './logo.svg';
 import './App.css';
-import NirbhayAnimation from './Components/home';
+import { Canvas } from '@react-three/fiber';
+
 import Index from './Components';
 function App() {
   return (
-    <div className="App">
-      <Index></Index>
+    <div className="scene">
+      <Canvas>
+        <Index></Index>
+
+      </Canvas>
+      <div id="portal"></div>
     </div>
   );
 }

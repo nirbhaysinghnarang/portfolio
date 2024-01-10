@@ -1,24 +1,40 @@
-import React, { useRef, Suspense, useState} from 'react';
+import React, { useRef, Suspense, useEffect } from 'react';
 import { Canvas, useThree } from '@react-three/fiber';
 import {
-    Text3D,
     OrbitControls,
-    Center,
     Stars,
-    Float,
-    Sparkles,
-    useMatcapTexture,
-    Html
 } from "@react-three/drei";
 import Home from './home';
-import Menu from './menu';
+import Experience from './experience';
+import { Bloom, Noise, Vignette } from '@react-three/postprocessing';
+import { EffectComposer } from '@react-three/postprocessing';
+
+
+export function CameraSetup() {
+    const { camera } = useThree();
+    useEffect(() => {
+        camera.position.set(0, 0, -100);
+        camera.lookAt(0, 0, 0);
+        camera.updateProjectionMatrix();
+    }, [camera]);
+    return null;
+}
+
 function Index() {
+    const { camera, gl } = useThree();
+    const controlsRef = useRef();
     return (
-        <div className='scene'>
-            <Canvas>
+        <>
+            <CameraSetup></CameraSetup>
+            <EffectComposer>
+                <Bloom luminanceThreshold={0} luminanceSmoothing={0.9} height={300} />
+                <Noise opacity={0.02} />
+                <Vignette eskil={false} offset={0.1} darkness={1.1} />
                 <OrbitControls
                     enableZoom={true}
                     autoRotate={true}
+                    ref={controlsRef}
+                    args={[camera, gl.domElement]}
                     autoRotateSpeed={-0.1}
                     enablePan={true}
                     azimuth={[-Math.PI / 4, Math.PI / 4]}
@@ -26,7 +42,7 @@ function Index() {
                     dampingFactor={0.05}
                 />
                 <ambientLight intensity={0.5} />
-                <pointLight position={[10, 10, 10]} />
+                <pointLight position={[5, 5, 5]} />
                 <Suspense fallback={"Loading"}>
                     <Stars
                         radius={100}
@@ -37,24 +53,14 @@ function Index() {
                         fade
                         speed={0.2}
                     />
-                    <Sparkles
-                        count={300}
-                        size={3}
-                        speed={0.02}
-                        opacity={1}
-                        scale={10}
-                        color="#fff3b0"
-                    />
-                    <Home />
-                    <Menu></Menu>
-           
+                    {/* <Home /> */}
+                    <Experience ref={controlsRef} camera={camera} gl={gl}></Experience>
                 </Suspense>
 
 
+            </EffectComposer>
 
-            </Canvas>
-        </div>
-
+        </>
     );
 }
 
